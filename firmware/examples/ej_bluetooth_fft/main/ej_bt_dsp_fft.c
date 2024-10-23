@@ -95,14 +95,14 @@ static void FftTask(void *pvParameter){
         FFTMagnitude(ecg_filt, ecg_filt_fft, BUFFER_SIZE);
         for(int16_t i=0; i<BUFFER_SIZE/2; i++){
             /* Formato de datos para que sean graficados en la aplicación móvil */
-            sprintf(msg, "*HX%2.2fY%2.2f,X%2.2fY%2.2f*\n", f[i], ecg_fft[i], f[i], ecg_filt_fft[i]);
+            sprintf(msg, "*HX%2.2fY%2.2f,X%2.2fY%2.2f*\n", f[i], ecg_fft[i], f[i], ecg_filt_fft[i]); 
             BleSendString(msg);
         }
     }
 }
 /*==================[external functions definition]==========================*/
 void app_main(void){
-    ble_config_t ble_configuration = {
+    ble_config_t ble_configuration = { 
         "ESP_EDU_1",
         read_data
     };

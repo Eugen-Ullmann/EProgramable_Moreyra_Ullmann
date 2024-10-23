@@ -37,7 +37,7 @@
             "path": "examples/Proyecto_3"
         },
         {
-            "path": "../../Ullmann_2C_2024/firmware/projects/guia1_ej4-5-6"
+            "path": "../../Ullmann_2C_2024/firmware/projects/Proyecto 2- ej 2"
         }
     ],
     "settings": {
@@ -99,7 +99,8 @@
             "vumeter.h": "c",
             "rtc_mcu.h": "c",
             "fft.h": "c",
-            "i2c.h": "c"
+            "i2c.h": "c",
+            "portmacro.h": "c"
         },
     },
     "tasks": {
