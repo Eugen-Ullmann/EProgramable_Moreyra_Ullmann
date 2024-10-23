@@ -26,13 +26,37 @@
 #include "timer_mcu.h"
 #include "gpio_mcu.h"
 /*==================[macros and definitions]=================================*/
-#define CONFIG_BLINK_PERIOD 150
 #define GPIO_RELE GPIO_1
+#define CONFIG_PERIOD_US 150 * 1000
 /*==================[internal data definition]===============================*/
 uint32_t threshold = 2400;
+TaskHandle_t deteccionHumedad_handle = NULL;
 
 /*==================[internal functions declaration]=========================*/
+void FuncTimerDeteccion(void *param)
+{
+    vTaskNotifyGiveFromISR(deteccionHumedad_handle, pdFALSE); /* Envía una notificación a la tarea asociada */
+}
+static void deteccionHumedad(void *pvParameter)
+{
+    uint16_t valorLectura = 0;
+    while (true)
+    {
+        ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+        AnalogInputReadSingle(CH0, &valorLectura);
+        UartSendString(UART_PC, (char *)UartItoa(valorLectura, 10));
+        UartSendString(UART_PC, "\r\n");
 
+        if (valorLectura > threshold)
+        {
+            GPIOOff(GPIO_RELE);
+        }
+        else
+        {
+            GPIOOn(GPIO_RELE);
+        }
+    }
+}
 /*==================[external functions definition]==========================*/
 void app_main(void)
 {
@@ -45,7 +69,6 @@ void app_main(void)
     config.sample_frec = NULL;
 
     AnalogInputInit(&config);
-    uint16_t valorLectura = 0;
 
     serial_config_t my_uart = {
         .port = UART_PC,
@@ -59,25 +82,38 @@ void app_main(void)
     GPIOOff(GPIO_RELE);
     GPIOOn(GPIO_RELE);
 
-    while (true)
-    {
+    /* Timer configuration */
+    timer_config_t timer_deteccion = {
+        .timer = TIMER_A,
+        .period = CONFIG_PERIOD_US,
+        .func_p = FuncTimerDeteccion,
+        .param_p = NULL};
+    TimerInit(&timer_deteccion);
+    TimerStart(timer_deteccion.timer);
+ 
 
-        AnalogInputReadSingle(CH0, &valorLectura);
-        UartSendString(UART_PC, (char *)UartItoa(valorLectura, 10));
-        UartSendString(UART_PC, "\r\n");
-
-        if (valorLectura > threshold)
-        {
-            GPIOOff(GPIO_RELE);
-        }
-        else
-        {
-            GPIOOn(GPIO_RELE);
-        }
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
-    }
-    
+    xTaskCreate(&deteccionHumedad, "Sensado", 512, NULL, 5, &deteccionHumedad_handle);
 }
 
+/*==================[end of file]============================================*/   
 
-/*==================[end of file]============================================*/
+
+
+/*
+        while (true)
+        {
+
+            AnalogInputReadSingle(CH0, &valorLectura);
+            UartSendString(UART_PC, (char *)UartItoa(valorLectura, 10));
+            UartSendString(UART_PC, "\r\n");
+
+            if (valorLectura > threshold)
+            {
+                GPIOOff(GPIO_RELE);
+            }
+            else
+            {
+                GPIOOn(GPIO_RELE);
+            }
+            vTaskDelay(500 / portTICK_PERIOD_MS);
+        }   */
