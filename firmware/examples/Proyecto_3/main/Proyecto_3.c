@@ -9,7 +9,15 @@
  * |   Date	    | Description                                    |
  * |:----------:|:-----------------------------------------------|
  * | 12/09/2023 | Document creation		                         |
- *
+ * 
+ *  * |   EDU-ESP    | Periferico|
+ * |:----------:|:-----------|
+ * | CH0    | Sensor de humedad	| 
+ * | +3.3V    | 	+3.3V   |
+ * | GND    | 		GND   |
+ * | GPIO_1   | Rele	|
+ * | GND    | 		GND   |
+ * | +5V    | 		+5V   |
  * @author Eugen Ullmann (eu.ullmann@gmail.com) & Jesus Moreyra (jesus.moreyra@ingenieria.uner.edu.ar)
  *
  */
@@ -22,7 +30,6 @@
 #include "freertos/task.h"
 #include "analog_io_mcu.h"
 #include "uart_mcu.h"
-#include "freertos/task.h"
 #include "timer_mcu.h"
 #include "gpio_mcu.h"
 #include "ble_mcu.h"
@@ -39,14 +46,28 @@ TaskHandle_t notifyBlueTooth_handle = NULL;
 uint16_t valorLectura = 0;
 bool gpio_rele = 0;
 /*==================[internal functions declaration]=========================*/
+/**
+ * @brief Notifica a la tarea asociada para la detección
+ * @param param puntero a un parámetro que no se utiliza
+ */
 void FuncTimerDeteccion(void *param)
 {
     vTaskNotifyGiveFromISR(deteccionHumedad_handle, pdFALSE); /* Envía una notificación a la tarea asociada */
 }
+/**
+ * @brief Notifica a la tarea asociada para que envíe los datos por Bluetooth
+ * @param param puntero a un parámetro que no se utiliza
+ */
 void FuncTimerBT(void *param)
 {
     vTaskNotifyGiveFromISR(notifyBlueTooth_handle, pdFALSE); /* Envía una notificación a la tarea asociada */
 }
+/**
+ * @brief  Lee el valor del sensor de humedad cada vez que recibe una notificación y
+ *         lo envía por UART. Si el valor es mayor al umbral, apaga el rele, de lo
+ *         contrario lo enciende.
+ * @param pvParameter puntero a un parámetro que no se utiliza
+ */
 static void deteccionHumedad(void *pvParameter)
 {
 
@@ -69,6 +90,12 @@ static void deteccionHumedad(void *pvParameter)
         }
     }
 }
+/**
+ * @brief Envía por Bluetooth el porcentaje de humedad y el estado del riego
+ *        cada CONFIG_BLINK_PERIOD milisegundos.
+ *
+ * @param pvParameter puntero a un parámetro que no se utiliza
+ */
 static void notifyBT(void *pvParameter)
 {
     uint16_t humedadMinima = 3300;
@@ -115,10 +142,11 @@ void app_main(void)
     UartInit(&my_uart);
 
     GPIOInit(GPIO_RELE, GPIO_OUTPUT);
-    GPIOOff(GPIO_RELE);
-    GPIOOn(GPIO_RELE);
+    //GPIOOff(GPIO_RELE);
+  //  GPIOOn(GPIO_RELE);
 
     /* Bluetooth configuration */
+
     ble_config_t ble_configuration = {
         "Regador Automatizado",
 
