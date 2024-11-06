@@ -38,6 +38,9 @@
         },
         {
             "path": "../../Ullmann_2C_2024/firmware/projects/Proyecto 2- ej 2"
+        },
+        {
+            "path": "../../Ullmann_2C_2024/firmware/projects/Examen_4-11"
         }
     ],
     "settings": {
@@ -100,7 +103,8 @@
             "rtc_mcu.h": "c",
             "fft.h": "c",
             "i2c.h": "c",
-            "portmacro.h": "c"
+            "portmacro.h": "c",
+            "stdio.h": "c"
         },
     },
     "tasks": {

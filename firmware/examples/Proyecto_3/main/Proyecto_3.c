@@ -18,6 +18,9 @@
  * | GPIO_1   | Rele	|
  * | GND    | 		GND   |
  * | +5V    | 		+5V   |
+ * | GND    | 		GND   |
+ * | GPIO_3    | 	ECHO	|
+ * | GPIO_2    | 	TRIGGER |
  * @author Eugen Ullmann (eu.ullmann@gmail.com) & Jesus Moreyra (jesus.moreyra@ingenieria.uner.edu.ar)
  *
  */
@@ -34,6 +37,7 @@
 #include "gpio_mcu.h"
 #include "ble_mcu.h"
 #include "led.h"
+#include "hc_sr04.h"
 /*==================[macros and definitions]=================================*/
 #define GPIO_RELE GPIO_1
 #define CONFIG_PERIOD_US 150 * 1000
@@ -45,6 +49,10 @@ TaskHandle_t deteccionHumedad_handle = NULL;
 TaskHandle_t notifyBlueTooth_handle = NULL;
 uint16_t valorLectura = 0;
 bool gpio_rele = 0;
+bool tanquevacio=0;
+uint16_t distancia;
+uint16_t volumen_restante;
+uint16_t auxiliar;
 /*==================[internal functions declaration]=========================*/
 /**
  * @brief Notifica a la tarea asociada para la detección
@@ -77,7 +85,8 @@ static void deteccionHumedad(void *pvParameter)
         AnalogInputReadSingle(CH0, &valorLectura);
         UartSendString(UART_PC, (char *)UartItoa(valorLectura, 10));
         UartSendString(UART_PC, "\r\n");
-
+    if (!tanquevacio)
+    {
         if (valorLectura > threshold)
         {
             GPIOOff(GPIO_RELE);
@@ -88,6 +97,20 @@ static void deteccionHumedad(void *pvParameter)
             GPIOOn(GPIO_RELE);
             gpio_rele = 1;
         }
+    }
+      //  vTaskDelay(CONFIG_PERIOD_US / portTICK_PERIOD_MS);
+        distancia = HcSr04ReadDistanceInCentimeters();
+        auxiliar = 17.0 - distancia;
+        volumen_restante = (11.0*11.0* (float)auxiliar);
+        UartSendString(UART_PC, (char *)UartItoa(distancia, 10));
+        UartSendString(UART_PC, "\r\n");
+        UartSendString(UART_PC, "El volumen restante es: ");
+        UartSendString(UART_PC, (char *)UartItoa(volumen_restante, 10));
+        UartSendString(UART_PC, "\r\n");
+        if (volumen_restante < 1)
+        tanquevacio = 1;
+        else
+        tanquevacio = 0;
     }
 }
 /**
@@ -109,19 +132,33 @@ static void notifyBT(void *pvParameter)
         sprintf(msg, "*H%d \n", (int)porcentajeHumedad);
         BleSendString(msg);
         printf(msg);
+        sprintf(msg, "*A%d \n", (int)volumen_restante);
+        BleSendString(msg);
+
 
          if (gpio_rele == 1)
             {
-                BleSendString("*CLa planta se esta regando \n");
+                BleSendString("*CLa planta se rego \n");
             }
             else
             BleSendString("*C\n");
     }
 }
+
+/*void medicion_volumen(void *pvParameter)
+{
+    while (1)
+    {
+        
+
+    }
+}*/
 /*==================[external functions definition]==========================*/
 void app_main(void)
 {
     LedsInit();
+
+    HcSr04Init(GPIO_3, GPIO_2);
 
     analog_input_config_t config;
 
