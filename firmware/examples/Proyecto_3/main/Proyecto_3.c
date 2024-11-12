@@ -145,14 +145,6 @@ static void notifyBT(void *pvParameter)
     }
 }
 
-/*void medicion_volumen(void *pvParameter)
-{
-    while (1)
-    {
-        
-
-    }
-}*/
 /*==================[external functions definition]==========================*/
 void app_main(void)
 {
@@ -179,8 +171,7 @@ void app_main(void)
     UartInit(&my_uart);
 
     GPIOInit(GPIO_RELE, GPIO_OUTPUT);
-    //GPIOOff(GPIO_RELE);
-  //  GPIOOn(GPIO_RELE);
+
 
     /* Bluetooth configuration */
 
